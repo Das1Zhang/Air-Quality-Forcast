@@ -1,0 +1,15 @@
+pandas>=1.5.0
+numpy>=1.23.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+pyecharts>=2.0.0
+scikit-learn>=1.2.0
+torch>=2.0.0
+openpyxl>=3.0.0
+# 以下地图包为可选依赖，如果安装失败不影响项目运行
+# 项目已提供替代可视化方案（map_visualization_helper.py）
+# 如果安装失败，请运行: python install_echarts_maps.py
+# 或者跳过安装，使用替代方案
+# echarts-china-provinces-pypkg>=0.0.1  # 可选
+# echarts-china-cities-pypkg>=0.0.1    # 可选
+
