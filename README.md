@@ -128,7 +128,7 @@ python step1_data_merging.py
 - 读取 `data/` 目录下所有城市的 Excel 文件
 - 按时间正序排列数据
 - 提取所需列：`city`, `date`, `PM2.5`, `PM10`, `O3`, `SO2`, `NO2`, `CO`, `AQI`
-- 生成 `AirCondition.csv` 文件
+- 生成 `output/merged_data/AirCondition.csv` 文件
 
 ### 后续步骤
 
@@ -146,9 +146,21 @@ Air-Quality-Forcast/
 │   ├── 历史日数据_武汉市.xlsx
 │   ├── 历史日数据_黄石市.xlsx
 │   └── ...
+├── output/                        # 输出目录（按功能分类存放生成的文件）
+│   ├── merged_data/               # 合并数据：步骤1数据整合输出
+│   │   └── AirCondition.csv       # 合并后的数据文件
+│   ├── eda/                       # 数据探索：步骤2 EDA 分析输出
+│   │   └── （可视化图表、统计报告）
+│   ├── features/                  # 特征工程：步骤3特征处理输出
+│   │   └── （处理后的特征数据）
+│   ├── models/                    # 模型训练：步骤4模型训练输出
+│   │   └── （模型权重、训练日志）
+│   ├── predictions/               # 预测结果：步骤5模型评估输出
+│   │   └── AirPrediction.pkl      # 预测结果文件
+│   └── visualization/             # 可视化：步骤6最终可视化输出
+│       └── map_hubei.html         # 地图可视化
 ├── step1_data_merging.py          # 步骤 1：数据整合脚本
 ├── check_dependencies.py          # 依赖检查工具（检查并安装缺失的包）
-├── AirCondition.csv               # 合并后的数据文件（运行步骤 1 后生成）
 ├── requirements.txt               # Python 依赖包列表（pip 安装）
 ├── environment.yml                # Conda 环境配置文件（推荐）
 └── README.md                      # 项目说明文档

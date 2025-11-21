@@ -30,6 +30,10 @@ wheels/
 # 数据文件
 data/*.xlsx
 data/*.csv
+
+# 输出文件（按步骤分类）
+output/
+!output/**/.gitkeep
 AirCondition.csv
 AirPrediction.pkl
 
@@ -57,4 +61,5 @@ Thumbs.db
 # 临时文件
 *.tmp
 *.log
+.agent/
 
