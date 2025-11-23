@@ -121,19 +121,46 @@ python check_dependencies.py
 运行数据整合脚本，将所有城市的数据合并为一个 CSV 文件：
 
 ```bash
-python step1_data_merging.py
+python src/1_data_process.py
 ```
 
 该脚本会：
 - 读取 `data/` 目录下所有城市的 Excel 文件
 - 按时间正序排列数据
 - 提取所需列：`city`, `date`, `PM2.5`, `PM10`, `O3`, `SO2`, `NO2`, `CO`, `AQI`
-- 生成 `output/merged_data/AirCondition.csv` 文件
+- 生成 `data/AirCondition.csv`（可复制到 `output/merged_data/` 使用）
+
+### 步骤 2：探索性数据分析（EDA）
+
+```bash
+python src/2_eda.py
+```
+
+输出：
+- 城市 AQI 均值表：`output/eda/city_aqi_mean.csv`
+- 最近 90 天 AQI 趋势图：`output/eda/aqi_trend_90days.png`
+- 污染物与 AQI 相关性热力图：`output/eda/aqi_correlation_heatmap.png`
+
+### 步骤 3：特征工程与预处理
+
+```bash
+python src/3_feature_engineering.py
+```
+
+主要流程：
+- 日期转换、StandardScaler 归一化
+- 构造月/日/星期/季节特征
+- 生成 AQI_lag_1 ~ AQI_lag_7 滞后特征
+- 填充缺失值（0），并用 SelectKBest 选出前 10 个特征
+
+输出：
+- `output/features/processed_features.csv`
+- `output/features/selected_features.csv`
+- `output/features/feature_metadata.json`
+- `models/aqi_scaler.pkl`
 
 ### 后续步骤
 
-- **步骤 2**: 数据探索 (EDA) - 可视化分析
-- **步骤 3**: 特征工程 - 数据预处理和特征构造
 - **步骤 4**: 模型构建与训练 - LSTM 模型训练
 - **步骤 5**: 模型评估与预测保存
 - **步骤 6**: 可视化展示 - 生成图表和地图
@@ -159,8 +186,13 @@ Air-Quality-Forcast/
 │   │   └── AirPrediction.pkl      # 预测结果文件
 │   └── visualization/             # 可视化：步骤6最终可视化输出
 │       └── map_hubei.html         # 地图可视化
-├── step1_data_merging.py          # 步骤 1：数据整合脚本
-├── check_dependencies.py          # 依赖检查工具（检查并安装缺失的包）
+├── src/                           # 核心脚本目录（1~4 阶段）
+│   ├── 1_data_process.py
+│   ├── 2_eda.py
+│   ├── 3_feature_engineering.py
+│   └── ...
+├── tools/                         # 辅助脚本（依赖检查等）
+│   └── check_dependencies.py
 ├── requirements.txt               # Python 依赖包列表（pip 安装）
 ├── environment.yml                # Conda 环境配置文件（推荐）
 └── README.md                      # 项目说明文档
