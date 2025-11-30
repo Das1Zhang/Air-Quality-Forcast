@@ -38,3 +38,41 @@
   - `output/features/feature_metadata.json`
   - `models/aqi_scaler.pkl`
 - 运行命令：`python src/3_feature_engineering.py`。
+
+### 阶段 4：LSTM 模型构建与训练
+- 脚本：`src/4_train_model.py`。
+- 主要工作：
+  - 读取阶段 3 产出的精选特征，生成 30 天时间序列样本。
+  - 按 8:2 划分训练/测试集，构建两层 LSTM（hidden_size=64）训练 200 epoch。
+  - 计算标准化域与反归一化域的 MSE、R²，并保存测试预测结果。
+  - 将模型权重、配置、训练指标与未来预测序列写入 `models/` 目录。
+- 产出文件：
+  - `models/lstm_model.pth`
+  - `models/lstm_model_config.json`
+  - `models/training_metrics.json`
+  - `models/prediction_sequences.pkl`
+  - `output/models/test_predictions.csv`
+- 运行命令：`python src/4_train_model.py`。
+
+### 阶段 5：模型评估与预测保存
+- 脚本：`src/5_evaluate_predict.py`。
+- 主要工作：
+  - 读取测试集预测、模型权重、未来预测序列以及 scaler。
+  - 计算真实 AQI 域的 MSE / R²，并绘制“真实 vs 预测”折线图。
+  - 加载 LSTM 模型，对各城市最近 30 天数据预测下一日 AQI，并反归一化。
+  - 将城市、预测值、历史真实 AQI 整理为字典并保存，供阶段 6 可视化。
+- 产出文件：
+  - `output/models/test_vs_pred.png`
+  - `output/predictions/AirPrediction.pkl`
+- 运行命令：`python src/5_evaluate_predict.py`。
+
+### 阶段 6：预测结果可视化
+- 脚本：`src/6_visualize.py`。
+- 主要工作：
+  - 读取阶段 5 生成的 `AirPrediction.pkl`，绘制 17 个城市历史 AQI + 预测值折线子图。
+  - 使用 `map_visualization_helper` 生成湖北省预测热力图（若地图包缺失则自动降级到中国地图或柱状图）。
+  - 输出最终可视化文件，供展示与汇报使用。
+- 产出文件：
+  - `output/visualization/AirPrediction.png`
+  - `output/visualization/map_hubei.html`
+- 运行命令：`python src/6_visualize.py`。

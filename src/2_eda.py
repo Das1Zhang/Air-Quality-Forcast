@@ -6,8 +6,11 @@
 from pathlib import Path
 import sys
 
+import math
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -83,18 +86,40 @@ def plot_aqi_trend(df: pd.DataFrame, days: int = 90):
         print("筛选后的 90 天数据为空，无法绘制趋势图。")
         return
 
-    fig, ax = plt.subplots(figsize=(14, 8))
-    for city, group in filtered.groupby("city"):
-        ax.plot(group["date"], group["AQI"], label=city, linewidth=1)
+    unique_cities = filtered["city"].unique()
+    num_cities = len(unique_cities)
+    cols = 3
+    rows = math.ceil(num_cities / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 3.5 * rows), sharex=False, sharey=True)
+    if not isinstance(axes, np.ndarray):
+        axes = np.array([axes])
+    axes = axes.flatten()
+    cmap = plt.get_cmap("tab20")
+    color_positions = np.linspace(0, 1, num_cities) if num_cities > 1 else [0]
 
-    ax.set_title(f"各城市最近 {days} 天 AQI 趋势", fontsize=14, fontweight="bold")
-    ax.set_xlabel("日期")
-    ax.set_ylabel("AQI")
-    ax.grid(alpha=0.3, linestyle="--")
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=8)
-    fig.tight_layout()
+    for idx, (city, group) in enumerate(filtered.groupby("city")):
+        ax = axes[idx]
+        color = cmap(color_positions[idx % len(color_positions)])
+        ax.plot(
+            group["date"],
+            group["AQI"],
+            color=color,
+            linewidth=1.5,
+            marker="o",
+            markersize=2,
+        )
+        ax.set_title(city, fontsize=11)
+        ax.set_xlabel("日期")
+        ax.set_ylabel("AQI")
+        ax.grid(alpha=0.3, linestyle="--")
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+
+    for idx in range(num_cities, len(axes)):
+        axes[idx].axis("off")
+
+    fig.suptitle(f"各城市最近 {days} 天 AQI 趋势", fontsize=16, fontweight="bold")
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
     fig.savefig(TREND_FIG, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"✓ 已保存 AQI 趋势图: {TREND_FIG}")
