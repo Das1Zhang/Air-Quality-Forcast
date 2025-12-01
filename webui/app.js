@@ -1,0 +1,187 @@
+const cities = [
+    "武汉市",
+    "黄石市",
+    "十堰市",
+    "宜昌市",
+    "襄阳市",
+    "鄂州市",
+    "荆门市",
+    "孝感市",
+    "荆州市",
+    "黄冈市",
+    "咸宁市",
+    "随州市",
+    "恩施土家族苗族自治州",
+    "仙桃市",
+    "潜江市",
+    "天门市",
+    "神农架林区",
+];
+
+const stageList = [
+    { id: "stage1", title: "阶段 1", desc: "数据整合" },
+    { id: "stage2", title: "阶段 2", desc: "探索性数据分析" },
+    { id: "stage3", title: "阶段 3", desc: "特征工程" },
+    { id: "stage4", title: "阶段 4", desc: "模型训练" },
+    { id: "stage5", title: "阶段 5", desc: "评估与预测" },
+    { id: "stage6", title: "阶段 6", desc: "可视化展示" },
+];
+
+const stagingFiles = [];
+const citySelect = document.getElementById("citySelect");
+const stagingList = document.getElementById("stagingList");
+const stagingHint = document.getElementById("stagingHint");
+const consoleBox = document.getElementById("console");
+
+function initCitySelect() {
+    cities.forEach((city) => {
+        const option = document.createElement("option");
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+    });
+}
+
+function updateStagingView() {
+    stagingList.innerHTML = "";
+    if (!stagingFiles.length) {
+        stagingHint.style.display = "block";
+        return;
+    }
+    stagingHint.style.display = "none";
+    stagingFiles.forEach((file, index) => {
+        const li = document.createElement("li");
+        li.className = "staging__item";
+        li.innerHTML = `
+      <div>
+        <span>${file.name}</span>
+        <p class="muted">${(file.size / 1024).toFixed(1)} KB</p>
+      </div>
+      <button class="button ghost" data-remove="${index}">移除</button>
+    `;
+        stagingList.appendChild(li);
+    });
+}
+
+function handleFiles(files) {
+    for (const file of files) {
+        if (stagingFiles.length >= 5) break;
+        stagingFiles.push(file);
+    }
+    updateStagingView();
+}
+
+function setStageStatus(stageId, status, text) {
+    const card = document.querySelector(`.stage-card[data-stage="${stageId}"]`);
+    if (!card) return;
+    const label = card.querySelector(".stage-status");
+    label.className = `stage-status status-${status}`;
+    label.textContent = text;
+}
+
+function appendConsole(message) {
+    const line = document.createElement("p");
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    consoleBox.appendChild(line);
+    consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+document.getElementById("dropZone").addEventListener("click", () => {
+    document.getElementById("fileInput").click();
+});
+
+document
+    .getElementById("fileInput")
+    .addEventListener("change", (e) => handleFiles(e.target.files));
+
+document
+    .getElementById("dropZone")
+    .addEventListener("dragover", (e) => e.preventDefault());
+
+document
+    .getElementById("dropZone")
+    .addEventListener("drop", (e) => {
+        e.preventDefault();
+        handleFiles(e.dataTransfer.files);
+    });
+
+document
+    .getElementById("clearStaging")
+    .addEventListener("click", () => {
+        stagingFiles.length = 0;
+        updateStagingView();
+        appendConsole("已清空暂存区文件。");
+    });
+
+stagingList.addEventListener("click", (e) => {
+    if (e.target.dataset.remove !== undefined) {
+        stagingFiles.splice(Number(e.target.dataset.remove), 1);
+        updateStagingView();
+    }
+});
+
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+    if (!stagingFiles.length) {
+        alert("请先添加文件！");
+        return;
+    }
+    const selectedCities = Array.from(citySelect.selectedOptions).map(
+        (o) => o.value
+    );
+    if (!selectedCities.length) {
+        alert("至少选择一个市区！");
+        return;
+    }
+
+    appendConsole("开始上传到暂存区...");
+    const formData = new FormData();
+    stagingFiles.forEach((file) => formData.append("files", file));
+    formData.append("cities", JSON.stringify(selectedCities));
+
+    try {
+        await fetch("/api/upload", { method: "POST", body: formData });
+        appendConsole("上传完成。");
+    } catch (err) {
+        appendConsole(`上传失败：${err}`);
+    }
+});
+
+document.getElementById("trainBtn").addEventListener("click", async () => {
+    appendConsole("启动训练与预测流程...");
+    stageList.forEach((stage) =>
+        setStageStatus(stage.id, "running", "执行中")
+    );
+    try {
+        await fetch("/api/run_pipeline", { method: "POST" });
+        stageList.forEach((stage) =>
+            setStageStatus(stage.id, "success", "完成")
+        );
+        appendConsole("所有阶段已完成。");
+    } catch (err) {
+        stageList.forEach((stage) =>
+            setStageStatus(stage.id, "error", "失败")
+        );
+        appendConsole(`流程失败：${err}`);
+    }
+});
+
+document
+    .getElementById("refreshStages")
+    .addEventListener("click", async () => {
+        appendConsole("刷新阶段状态...");
+        const res = await fetch("/api/status");
+        const status = await res.json();
+        stageList.forEach(({ id }) => {
+            const state = status[id] || { status: "idle", text: "待开始" };
+            setStageStatus(id, state.status, state.text);
+            const output = document.getElementById(`${id}-output`);
+            if (output) {
+                output.innerHTML = state.output
+                    ? `<a href="${state.output}" target="_blank">查看输出</a>`
+                    : '<p class="placeholder">暂无输出</p>';
+            }
+        });
+    });
+
+initCitySelect();
+updateStagingView();
