@@ -99,9 +99,16 @@ def plot_city_subplots(cities: Sequence[str], history: Sequence[Sequence[float]]
         axes[extra_idx].axis("off")
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=2)
-    fig.suptitle("湖北省各城市历史 AQI 与预测值", fontsize=14, fontweight="bold")
-    plt.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        ncol=2,
+        bbox_to_anchor=(0.5, -0.02),
+        frameon=False,
+    )
+    fig.suptitle("湖北省各城市历史 AQI 与预测值", fontsize=14, fontweight="bold", y=0.98)
+    plt.tight_layout(rect=(0, 0.04, 1, 0.94))
     fig.savefig(SUBPLOT_FILE, dpi=300)
     plt.close(fig)
     print(f"✓ 城市折线图已保存至 {SUBPLOT_FILE}")
