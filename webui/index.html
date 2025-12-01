@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>湖北省空气质量预测工作台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Merriweather:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <header class="hero">
+        <div class="hero__content">
+            <p class="eyebrow">Monet's Garden · 湖北 AQI</p>
+            <h1>湖北省空气质量预测工作台</h1>
+            <p>
+                上传多市区空气质量数据，沿用六阶段 LSTM 流程完成训练与预测，实时追踪各阶段可视化输出。
+            </p>
+            <div class="hero__chips">
+                <span>文件支持：.csv / .xlsx</span>
+                <span>阶段输出：Stage 1 - Stage 6</span>
+                <span>主题：Monet's Garden</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="panel upload-panel">
+            <h2>数据准备</h2>
+            <p class="panel__subtitle">选择市区并上传文件至暂存区，准备启动训练。</p>
+
+            <label class="field">
+                <span>选择市区</span>
+                <select id="citySelect">
+                    <!-- 选项仍然由 app.js 中 initCitySelect 动态填充 -->
+                </select>
+                <small>每次仅选择一个城市，依次上传各城市的数据文件</small>
+            </label>
+
+            <div class="field">
+                <span>上传数据文件</span>
+                <div id="dropZone" class="dropzone" role="button" tabindex="0">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            d="M12 5c-2.21 0-4 1.79-4 4v2H7a3 3 0 0 0-3 3v3h16v-3a3 3 0 0 0-3-3h-1V9c0-2.21-1.79-4-4-4Zm0 2a2 2 0 0 1 2 2v2H10V9a2 2 0 0 1 2-2Zm-7 8v1h14v-1a1 1 0 0 0-1-1h-2v1h-8v-1H6a1 1 0 0 0-1 1Z" />
+                    </svg>
+                    <p>拖拽文件到此处，或点击选择</p>
+                    <p class="muted">仅允许 .csv /.xlsx，每次上传 1 个文件</p>
+                    <input id="fileInput" type="file" accept=".csv,.xlsx" multiple hidden />
+                </div>
+            </div>
+
+            <div class="staging" id="stagingArea">
+                <div class="staging__header">
+                    <h3>暂存区</h3>
+                    <button id="clearStaging" class="button ghost">清空</button>
+                </div>
+                <ul id="stagingList" class="staging__list"></ul>
+                <p class="muted" id="stagingHint">尚未添加文件</p>
+            </div>
+
+            <div class="action-group">
+                <button id="uploadBtn" class="button secondary">上传到暂存区</button>
+                <button id="trainBtn" class="button primary">训练并预测</button>
+            </div>
+
+            <div class="console" id="console" aria-live="polite">
+                <p>等待操作...</p>
+            </div>
+        </section>
+
+        <section class="panel stage-panel">
+            <div class="stage-panel__header">
+                <div>
+                    <h2>阶段进度追踪</h2>
+                    <p class="panel__subtitle">实时查看六个阶段的运行状态与可视化输出。</p>
+                </div>
+                <button id="refreshStages" class="button ghost">刷新状态</button>
+            </div>
+
+            <div class="stage-timeline" id="stageTimeline">
+                <!-- Stage cards 1-6 (同样结构) -->
+                <!-- 以 stage1 为例，其他阶段仅替换编号与描述 -->
+                <article class="stage-card" data-stage="stage1">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 1</p>
+                            <h3>数据整合</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        合并上传的多城市空气质量数据，生成统一 AirCondition.csv。
+                    </p>
+                    <div class="stage-output" id="stage1-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+
+                <article class="stage-card" data-stage="stage2">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 2</p>
+                            <h3>探索性数据分析</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        生成城市 AQI 均值、90 天趋势图以及相关性热力图。
+                    </p>
+                    <div class="stage-output" id="stage2-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+
+                <article class="stage-card" data-stage="stage3">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 3</p>
+                            <h3>特征工程</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        构建时间特征、滞后特征并使用 SelectKBest 选出核心特征。
+                    </p>
+                    <div class="stage-output" id="stage3-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+
+                <article class="stage-card" data-stage="stage4">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 4</p>
+                            <h3>模型训练</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        训练 LSTM 模型并记录损失曲线、配置与权重。
+                    </p>
+                    <div class="stage-output" id="stage4-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+
+                <article class="stage-card" data-stage="stage5">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 5</p>
+                            <h3>评估与预测</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        输出预测 vs. 测试图、指标与 AirPrediction.pkl。
+                    </p>
+                    <div class="stage-output" id="stage5-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+
+                <article class="stage-card" data-stage="stage6">
+                    <div class="stage-card__header">
+                        <div>
+                            <p class="stage-label">阶段 6</p>
+                            <h3>可视化展示</h3>
+                        </div>
+                        <span class="stage-status status-idle">待开始</span>
+                    </div>
+                    <p class="stage-description">
+                        渲染 17 城市折线图与湖北 AQI 热力地图。
+                    </p>
+                    <div class="stage-output" id="stage6-output">
+                        <p class="placeholder">等待运行...</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>© 2025 湖北省空气质量预测实验 · Monet's Garden 主题界面</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

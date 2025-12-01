@@ -63,3 +63,11 @@ Thumbs.db
 *.log
 .agent/
 
+resources/geo/*.geojson
+
+models/*.pkl
+models/*.json
+models/*.pth
+models/*.pt
+models/*.h5
+models/*.model

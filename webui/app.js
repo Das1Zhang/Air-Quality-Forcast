@@ -1,3 +1,5 @@
+const API_BASE = "http://localhost:5000";
+
 const cities = [
     "武汉市",
     "黄石市",
@@ -64,10 +66,12 @@ function updateStagingView() {
 }
 
 function handleFiles(files) {
-    for (const file of files) {
-        if (stagingFiles.length >= 5) break;
-        stagingFiles.push(file);
-    }
+    const fileArray = Array.from(files);
+    if (!fileArray.length) return;
+
+    // 只保留一个文件（新文件覆盖旧文件）
+    stagingFiles.length = 0;
+    stagingFiles.push(fileArray[0]);
     updateStagingView();
 }
 
@@ -122,25 +126,31 @@ stagingList.addEventListener("click", (e) => {
 
 document.getElementById("uploadBtn").addEventListener("click", async () => {
     if (!stagingFiles.length) {
-        alert("请先添加文件！");
+        alert("请先选择一个数据文件！");
         return;
     }
-    const selectedCities = Array.from(citySelect.selectedOptions).map(
-        (o) => o.value
-    );
-    if (!selectedCities.length) {
-        alert("至少选择一个市区！");
+    const city = citySelect.value;
+    if (!city) {
+        alert("请先选择一个市区！");
         return;
     }
 
-    appendConsole("开始上传到暂存区...");
+    appendConsole(`开始上传到暂存区：城市 = ${city} ...`);
+
     const formData = new FormData();
-    stagingFiles.forEach((file) => formData.append("files", file));
-    formData.append("cities", JSON.stringify(selectedCities));
+    // 只上传一个文件
+    formData.append("file", stagingFiles[0]);
+    formData.append("city", city);
 
     try {
-        await fetch("/api/upload", { method: "POST", body: formData });
-        appendConsole("上传完成。");
+        const resp = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}`);
+        }
+        appendConsole(`上传完成：${city}。`);
+        // 上传成功后清空暂存区，避免误用旧文件
+        stagingFiles.length = 0;
+        updateStagingView();
     } catch (err) {
         appendConsole(`上传失败：${err}`);
     }
@@ -152,7 +162,7 @@ document.getElementById("trainBtn").addEventListener("click", async () => {
         setStageStatus(stage.id, "running", "执行中")
     );
     try {
-        await fetch("/api/run_pipeline", { method: "POST" });
+        await fetch(`${API_BASE}/api/run_pipeline`, { method: "POST" });
         stageList.forEach((stage) =>
             setStageStatus(stage.id, "success", "完成")
         );
@@ -169,16 +179,21 @@ document
     .getElementById("refreshStages")
     .addEventListener("click", async () => {
         appendConsole("刷新阶段状态...");
-        const res = await fetch("/api/status");
+        const res = await fetch(`${API_BASE}/api/status`);
         const status = await res.json();
         stageList.forEach(({ id }) => {
             const state = status[id] || { status: "idle", text: "待开始" };
             setStageStatus(id, state.status, state.text);
             const output = document.getElementById(`${id}-output`);
             if (output) {
-                output.innerHTML = state.output
-                    ? `<a href="${state.output}" target="_blank">查看输出</a>`
-                    : '<p class="placeholder">暂无输出</p>';
+                if (state.output) {
+                    // 保证链接从站点根目录开始，而不是当前 /webui/ 路径
+                    const url =
+                        state.output.startsWith("/") ? state.output : `/${state.output}`;
+                    output.innerHTML = `<a href="${url}" target="_blank">查看输出</a>`;
+                } else {
+                    output.innerHTML = '<p class="placeholder">暂无输出</p>';
+                }
             }
         });
     });
