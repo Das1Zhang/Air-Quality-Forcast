@@ -1,85 +1,222 @@
-"""
-地图可视化辅助工具
-提供不依赖 echarts-china-provinces-pypkg 的地图可视化方案
-"""
+"""地图可视化辅助工具：在缺少省级地图包时提供多级降级方案。"""
 
-def check_map_packages():
-    """检查地图包是否可用"""
-    map_available = False
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Iterable, List, Sequence, Tuple
+from urllib.error import URLError
+from urllib.request import urlopen
+
+
+GEO_DIR = Path("resources/geo")
+HUBEI_GEO_URL = "https://geo.datav.aliyun.com/areas_v3/bound/geojson?code=420000"
+LOCAL_GEO_PATH = GEO_DIR / "hubei.geojson"
+
+CITY_ADCODE = {
+    "武汉市": 420100,
+    "黄石市": 420200,
+    "十堰市": 420300,
+    "宜昌市": 420500,
+    "襄阳市": 420600,
+    "鄂州市": 420700,
+    "荆门市": 420800,
+    "孝感市": 420900,
+    "荆州市": 421000,
+    "黄冈市": 421100,
+    "咸宁市": 421200,
+    "随州市": 421300,
+    "恩施土家族苗族自治州": 422800,
+    "仙桃市": 429004,
+    "潜江市": 429005,
+    "天门市": 429006,
+    "神农架林区": 429021,
+}
+
+
+def check_map_packages() -> bool:
+    """检查 echarts 省级地图包是否可用。"""
     try:
-        import echarts_china_provinces_pypkg
-        map_available = True
-    except ImportError:
-        pass
-    
-    return map_available
+        import echarts_china_provinces_pypkg  # type: ignore
 
-def create_map_with_fallback(data_pair, output_file="map_hubei.html"):
-    """
-    创建湖北省 AQI 热力地图
-    如果地图包不可用，使用替代方案
-    """
-    from pyecharts.charts import Map
+        return True
+    except ImportError:
+        return False
+
+
+def _fetch_geojson(adcode: int) -> dict | None:
+    cache_path = GEO_DIR / f"{adcode}.geojson"
+    if cache_path.exists():
+        try:
+            return json.loads(cache_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    url = f"https://geo.datav.aliyun.com/areas_v3/bound/geojson?code={adcode}"
+    try:
+        with urlopen(url, timeout=10) as resp:
+            geojson_text = resp.read().decode("utf-8")
+        GEO_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(geojson_text, encoding="utf-8")
+        return json.loads(geojson_text)
+    except (URLError, OSError, json.JSONDecodeError):
+        return None
+
+
+def load_hubei_geojson() -> str | None:
+    """尝试本地/网络加载湖北省 GeoJSON，用于无包时注册地图。"""
+
+    if LOCAL_GEO_PATH.exists():
+        try:
+            return LOCAL_GEO_PATH.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    geo = _fetch_geojson(420000)
+    if geo is None:
+        return None
+    LOCAL_GEO_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOCAL_GEO_PATH.write_text(json.dumps(geo, ensure_ascii=False), encoding="utf-8")
+    return json.dumps(geo, ensure_ascii=False)
+
+
+def build_city_geojson(city_names: Sequence[str]) -> str | None:
+    features: List[dict] = []
+    for city in city_names:
+        adcode = CITY_ADCODE.get(city)
+        if not adcode:
+            continue
+        geo = _fetch_geojson(adcode)
+        if not geo:
+            continue
+        for feature in geo.get("features", []):
+            props = feature.setdefault("properties", {})
+            props["name"] = city
+            features.append(feature)
+
+    if not features:
+        return None
+
+    combined = {"type": "FeatureCollection", "features": features}
+    return json.dumps(combined, ensure_ascii=False)
+
+
+def _visual_map_opts(data_pair: Sequence[Tuple[str, float]]):
     from pyecharts import options as opts
-    
+
+    values = [v for _, v in data_pair if v is not None]
+    if not values:
+        values = [0, 100]
+    return opts.VisualMapOpts(
+        min_=min(values),
+        max_=max(values),
+        range_text=["高", "低"],
+        is_calculable=True,
+        range_color=["#50a3ba", "#eac736", "#d94e5d"],
+    )
+
+
+def create_map_with_fallback(data_pair: Sequence[Tuple[str, float]], output_file: str = "map_hubei.html") -> bool:
+    """创建湖北省 AQI 热力图，自动降级到尽可能可读的方案。"""
+
+    from pyecharts import options as opts
+    from pyecharts.charts import Map
+
     map_available = check_map_packages()
-    
+
+    init_opts = opts.InitOpts(width="1200px", height="650px")
+
     if map_available:
-        # 方案 1: 使用地图包（如果可用）
         print("使用 echarts-china-provinces-pypkg 创建地图...")
         map_chart = (
-            Map()
+            Map(init_opts=init_opts)
             .add(
                 "AQI预测值",
                 data_pair,
-                "湖北",  # 使用湖北省地图
+                "湖北",
                 is_roam=True,
+                label_opts=opts.LabelOpts(is_show=True),
             )
             .set_global_opts(
                 title_opts=opts.TitleOpts(title="湖北省空气质量预测热力地图"),
-                visualmap_opts=opts.VisualMapOpts(
-                    min_=0,
-                    max_=100,
-                    range_text=["高", "低"],
-                    is_calculable=True,
-                    range_color=["#50a3ba", "#eac736", "#d94e5d"],
-                ),
+                visualmap_opts=_visual_map_opts(data_pair),
             )
         )
         map_chart.render(output_file)
         print(f"✓ 地图已保存到 {output_file}")
         return True
-    else:
-        # 方案 2: 尝试使用内置地图
-        print("地图包不可用，尝试使用替代方案...")
+
+    print("地图包不可用，尝试使用城市级 GeoJSON...")
+    city_geo = build_city_geojson([name for name, _ in data_pair])
+    if city_geo:
         try:
-            # 尝试使用中国地图
-            map_chart = (
-                Map()
-                .add(
-                    "AQI预测值",
-                    data_pair,
-                    "china",  # 使用中国地图
-                    is_roam=True,
-                )
-                .set_global_opts(
-                    title_opts=opts.TitleOpts(title="湖北省空气质量预测热力地图（中国地图视图）"),
-                    visualmap_opts=opts.VisualMapOpts(
-                        min_=0,
-                        max_=100,
-                        range_text=["高", "低"],
-                        is_calculable=True,
-                        range_color=["#50a3ba", "#eac736", "#d94e5d"],
-                    ),
-                )
+            map_chart = Map(init_opts=init_opts)
+            map_chart.add_js_funcs(f"echarts.registerMap('HubeiCities', {city_geo});")
+            map_chart.add(
+                "AQI预测值",
+                data_pair,
+                "HubeiCities",
+                is_roam=True,
+                label_opts=opts.LabelOpts(is_show=True),
+            )
+            map_chart.set_global_opts(
+                title_opts=opts.TitleOpts(title="湖北省空气质量预测热力地图"),
+                visualmap_opts=_visual_map_opts(data_pair),
             )
             map_chart.render(output_file)
-            print(f"✓ 地图已保存到 {output_file}（使用中国地图）")
+            print(f"✓ 地图已保存到 {output_file}（城市级 GeoJSON）")
             return True
-        except Exception as e:
-            print(f"⚠ PyEcharts 地图创建失败: {e}")
-            print("将使用 matplotlib 创建替代可视化...")
-            return create_matplotlib_map(data_pair, output_file)
+        except Exception as exc:  # pragma: no cover - 极少发生
+            print(f"⚠ 自定义 GeoJSON 渲染失败: {exc}")
+
+    print("城市级 GeoJSON 不可用，尝试省级 GeoJSON...")
+    geo_json = load_hubei_geojson()
+    if geo_json:
+        try:
+            map_chart = Map(init_opts=init_opts)
+            map_chart.add_js_funcs(f"echarts.registerMap('HubeiProvince', {geo_json});")
+            map_chart.add(
+                "AQI预测值",
+                data_pair,
+                "HubeiProvince",
+                is_roam=True,
+                label_opts=opts.LabelOpts(is_show=True),
+            )
+            map_chart.set_global_opts(
+                title_opts=opts.TitleOpts(title="湖北省空气质量预测热力地图"),
+                visualmap_opts=_visual_map_opts(data_pair),
+            )
+            map_chart.render(output_file)
+            print(f"✓ 地图已保存到 {output_file}（省级 GeoJSON）")
+            return True
+        except Exception as exc:
+            print(f"⚠ 省级 GeoJSON 渲染失败: {exc}")
+
+    print("使用中国地图 fallback，并居中放大湖北区域...")
+    try:
+        map_chart = (
+            Map(init_opts=init_opts)
+            .add(
+                "AQI预测值",
+                data_pair,
+                "china",
+                is_roam=True,
+                label_opts=opts.LabelOpts(is_show=False),
+            )
+            .set_global_opts(
+                title_opts=opts.TitleOpts(title="湖北省空气质量预测热力地图（中国地图视图）"),
+                visualmap_opts=_visual_map_opts(data_pair),
+                geo_opts=opts.GeoOpts(center=[112.3, 30.6], zoom=5, scale_limit=opts.ScaleLimit(max_=8, min_=1)),
+                legend_opts=opts.LegendOpts(is_show=False),
+            )
+        )
+        map_chart.render(output_file)
+        print(f"✓ 地图已保存到 {output_file}（使用中国地图）")
+        return True
+    except Exception as e:
+        print(f"⚠ PyEcharts 地图创建失败: {e}")
+        print("将使用 matplotlib 创建替代可视化...")
+        return create_matplotlib_map(data_pair, output_file)
 
 def create_matplotlib_map(data_pair, output_file="map_hubei_matplotlib.png"):
     """
