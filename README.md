@@ -212,6 +212,50 @@ python src/6_visualize.py
 
 - 阶段 1~6 已实现；如需改进模型、替换可视化或撰写汇报，可在此基础上继续拓展。
 
+### Web 前端与 Flask API 工作台
+
+在命令行运行 1~6 阶段脚本之外，本项目还提供了一个简单的 Web 工作台，方便通过浏览器完成数据上传、流水线触发与阶段可视化查看：
+
+- 前端文件：`webui/index.html`, `webui/styles.css`, `webui/app.js`
+- 后端服务：`server.py`（基于 Flask）
+
+使用方式：
+
+1. 启动 API 服务（在项目根目录）：
+
+   ```bash
+   # 激活你的环境
+   conda activate air_quality  # 名称按实际环境调整
+
+   # 启动 Flask API（提供 /api/upload /api/run_pipeline /api/status）
+   python server.py
+   ```
+
+2. 启动静态文件服务器（同样在项目根目录）：
+
+   ```bash
+   python -m http.server 8080
+   ```
+
+3. 在浏览器访问前端工作台：
+
+   ```text
+   http://localhost:8080/webui/index.html
+   ```
+
+4. 在页面中按以下流程操作：
+
+   - 选择「市区」（单选），拖入对应城市的 `.xlsx` 数据文件。
+   - 点击「上传到暂存区」，后端会将文件保存为 `data/历史日数据_{城市}.xlsx`，与阶段 1 逻辑兼容。
+   - 为需要参与训练的各城市依次重复上一步。
+   - 点击「训练并预测」，前端会调用 `/api/run_pipeline`，后端串行执行 `src/1_data_process.py` 至 `src/6_visualize.py`。
+   - 通过「刷新状态」按钮调用 `/api/status`，可查看每个阶段的状态以及可视化输出链接（如 `aqi_trend_90days.png`、`test_vs_pred.png`、`map_hubei.html` 等）。
+
+说明：
+
+- Web 工作台只是对原有 1~6 阶段脚本的包装，并未改变核心训练与可视化逻辑。
+- 为避免泄露本地训练模型与地图缓存数据，`models/*.pkl`、`models/*.json`、`models/*.pth` 以及 `resources/geo/*.geojson` 等文件已加入 `.gitignore`，不会随仓库共享；如需在新环境使用，请重新运行阶段 3~6 生成对应文件。
+
 ## 项目结构
 
 ```

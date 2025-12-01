@@ -76,3 +76,23 @@
   - `output/visualization/AirPrediction.png`
   - `output/visualization/map_hubei.html`
 - 运行命令：`python src/6_visualize.py`。
+
+## 2025-12-01
+
+### 阶段 7：Web 前端工作台与 Flask API 集成
+- 新增前端界面：
+  - 创建 `webui/index.html`、`webui/styles.css`、`webui/app.js`，采用 “Monet's Garden” 主题配色，实现：
+    - 选择单个市区并上传对应 `.xlsx` 数据文件至暂存区。
+    - 触发“训练并预测”按钮，调用后端 API 执行完整的 1~6 阶段流水线。
+    - 通过“刷新状态”按钮轮询阶段状态，展示各阶段输出文件的链接（如 EDA 图、测试集对比图、湖北热力图）。
+- 新增后端服务：
+  - 增加 `server.py`（Flask），提供：
+    - `POST /api/upload`：接收前端上传的单个文件和城市名，将其保存为 `data/历史日数据_{city}.xlsx`，与 `src/1_data_process.py` 的读取逻辑保持一致。
+    - `POST /api/run_pipeline`：在项目根目录下依次运行 `src/1_data_process.py` ~ `src/6_visualize.py`，完成数据整合、EDA、特征工程、训练、评估与可视化。
+    - `GET /api/status`：返回各阶段的简要状态与主要输出文件路径，用于前端展示。
+- 数据与模型文件管理：
+  - 为避免在仓库中暴露本地训练产物和地图缓存数据，将以下文件类型加入 `.gitignore`：
+    - `resources/geo/*.geojson`（城市级 GeoJSON 缓存）。
+    - `models/*.pkl`, `models/*.json`, `models/*.pth`, `models/*.pt`, `models/*.h5`, `models/*.model` 等模型与中间结果文件。
+  - 使用 `git rm --cached` 将原有已跟踪的模型中间文件从版本库中移除，同时保留本地文件，确保他人在克隆仓库后可通过重新运行阶段 3~6 生成所需模型与预测结果。
+
