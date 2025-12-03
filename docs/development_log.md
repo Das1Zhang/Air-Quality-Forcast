@@ -96,3 +96,22 @@
     - `models/*.pkl`, `models/*.json`, `models/*.pth`, `models/*.pt`, `models/*.h5`, `models/*.model` 等模型与中间结果文件。
   - 使用 `git rm --cached` 将原有已跟踪的模型中间文件从版本库中移除，同时保留本地文件，确保他人在克隆仓库后可通过重新运行阶段 3~6 生成所需模型与预测结果。
 
+## 2025-12-03
+
+### Docker 化与 Web 工作台完善
+- Docker 支持：
+  - 编写 `Dockerfile`，基于官方 `pytorch/pytorch:latest` 镜像，预装 PyTorch 及项目依赖，便于在无本地 Python 环境的机器上快速运行完整流水线。
+  - 提取 Docker 专用依赖文件 `requirements-docker.txt`（不包含 `torch`），避免在容器内重复安装 PyTorch，缩短构建时间。
+  - 在镜像构建过程中安装中文字体 `fonts-wqy-zenhei`，并在 `src/2_eda.py`、`src/5_evaluate_predict.py`、`src/6_visualize.py` 中统一优先使用 `WenQuanYi Zen Hei`，解决容器内生成图表中文显示为方块的问题。
+- Web 工作台与 API 完善：
+  - 在 `server.py` 中新增：
+    - 根路由 `/`，直接返回 `webui/index.html`，方便通过 `http://localhost:5000` 访问前端工作台。
+    - 静态资源路由 `/styles.css` 与 `/app.js`，确保前端样式与脚本在容器环境下可正常加载。
+    - 输出文件路由 `/output/<path:subpath>`，统一对外暴露 `output/` 目录下的 EDA 图、模型评估图和湖北地图 HTML，可通过 Web UI 的“查看输出”按钮直接访问。
+  - 调整前端 `webui/app.js`：
+    - 将 `API_BASE` 从硬编码的 `http://localhost:5000` 改为相对路径 `""`，避免在 Docker 环境中因端口映射差异导致 `TypeError: Failed to fetch` 问题。
+    - 保持 `/api/upload`、`/api/run_pipeline`、`/api/status` 的调用逻辑不变，在本机与容器中实现一致的行为。
+- Docker 运行与数据持久化：
+  - 通过 README 中新增的 Docker 使用说明，整理了镜像构建、端口映射以及挂载 `data/` 目录的推荐命令，支持用户在容器中通过 Web UI 上传 Excel 并将数据持久化到宿主机。
+  - 在说明文档中明确标注了 Docker 镜像体积较大（约 10GB）以及首构建/首次拉取的时间成本，便于使用者提前规划磁盘与网络资源。
+

@@ -46,7 +46,12 @@ AIR_PRED_FILE = PREDICTION_OUTPUT_DIR / "AirPrediction.pkl"
 
 
 def set_chinese_font():
-    plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+    plt.rcParams["font.sans-serif"] = [
+        "WenQuanYi Zen Hei",  # Docker 镜像中安装的中文字体
+        "SimHei",
+        "Microsoft YaHei",
+        "Arial Unicode MS",
+    ]
     plt.rcParams["axes.unicode_minus"] = False
 
 

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 本地环境
+env/
+venv/
+ENV/
+.venv/
+
+# 数据与输出
+data/
+output/
+models/
+resources/geo/*.geojson
+
+# Git / IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# 其他临时文件
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

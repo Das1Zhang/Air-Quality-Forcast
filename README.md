@@ -256,6 +256,94 @@ python src/6_visualize.py
 - Web 工作台只是对原有 1~6 阶段脚本的包装，并未改变核心训练与可视化逻辑。
 - 为避免泄露本地训练模型与地图缓存数据，`models/*.pkl`、`models/*.json`、`models/*.pth` 以及 `resources/geo/*.geojson` 等文件已加入 `.gitignore`，不会随仓库共享；如需在新环境使用，请重新运行阶段 3~6 生成对应文件。
 
+### 使用 Docker 运行项目（可选）
+
+本项目提供了基于官方 PyTorch 镜像的 Docker 支持，便于在未配置 Python 环境的机器上快速体验完整流程（含 Web 工作台）：
+
+- Dockerfile：位于项目根目录，基于 `pytorch/pytorch:latest`，预装 PyTorch 及主要依赖。
+- 额外依赖：
+  - `requirements-docker.txt`：容器内安装的 Python 依赖列表（不包含 `torch`，由基础镜像提供）。
+  - 中文字体：在镜像构建过程中安装 `fonts-wqy-zenhei`，并在绘图脚本中优先使用 `WenQuanYi Zen Hei`，保证容器内生成的图表可正常显示中文。
+
+> ⚠️ 注意：由于基础镜像为完整的 PyTorch 镜像（含 CUDA 组件），最终镜像体积较大（约 10GB 量级），首次拉取与启动会相对耗时。建议在磁盘空间和网络条件允许的环境下使用。
+
+#### 1. 构建 Docker 镜像
+
+在项目根目录执行：
+
+```bash
+docker build -t das1zhang/air-quality-forecast:latest .
+```
+
+首构建会拉取 `pytorch/pytorch:latest` 基础镜像，耗时较长；后续修改代码后重建镜像会复用大部分缓存层，速度会明显加快。
+
+#### 2. 基本运行方式
+
+使用以下命令启动容器，并将容器内的 5000 端口映射到宿主机的 5000 端口：
+
+```bash
+docker run --rm -p 5000:5000 das1zhang/air-quality-forecast:latest
+```
+
+启动成功后，可以在浏览器访问：
+
+```text
+http://localhost:5000
+```
+
+此时：
+
+- 根路径 `/`：返回 `webui/index.html` 前端工作台页面。
+- `/api/upload`、`/api/run_pipeline`、`/api/status`：由容器内的 `server.py` 提供，与本机运行时保持一致。
+- `/output/...`：容器内跑完 1~6 阶段后生成的图表与可视化结果，可通过 Web UI 的“查看输出”链接访问。
+
+如端口 5000 已被占用，可以改用其它端口，例如：
+
+```bash
+docker run --rm -p 5002:5000 das1zhang/air-quality-forecast:latest
+```
+
+然后访问 `http://localhost:5002` 即可。
+
+#### 3. 上传数据的持久化（挂载 data 目录）
+
+默认情况下，用户通过 Web UI 上传的 Excel 文件会保存在容器内的 `/app/data` 目录中。如果使用 `--rm` 选项停止容器，这些文件会随容器一同删除。为了在宿主机上持久化这些数据，推荐通过挂载卷的方式将宿主机的 `data/` 目录映射到容器内：
+
+```bash
+docker run --rm \
+  -p 5000:5000 \
+  -v "${PWD}/data:/app/data" \
+  das1zhang/air-quality-forecast:latest
+```
+
+说明：
+
+- 宿主机目录：`${PWD}/data`（Windows PowerShell 下 `${PWD}` 为当前路径）。
+- 容器目录：`/app/data`（`server.py` 中的上传逻辑会将文件保存到此目录）。
+
+这样一来：
+
+- 通过 Web UI 上传的 `历史日数据_{城市}.xlsx` 文件会直接出现在宿主机的 `data/` 目录中。
+- 即使容器使用 `--rm` 退出，宿主机上的数据仍会保留。
+- 在本机直接运行 `python src/1_data_process.py` 时，也能复用这些数据文件。
+
+#### 4. 中文字体与图表显示
+
+- 宿主机本地运行时，可视化脚本会尝试使用 `SimHei`、`Microsoft YaHei` 等常见中文字体；
+- 在 Docker 容器中，为保证中文正常显示，构建镜像时额外安装了 `fonts-wqy-zenhei`，并在 `src/2_eda.py`、`src/5_evaluate_predict.py`、`src/6_visualize.py` 中统一调用：
+
+  ```python
+  plt.rcParams["font.sans-serif"] = [
+      "WenQuanYi Zen Hei",  # Docker 镜像中安装的中文字体
+      "SimHei",
+      "Microsoft YaHei",
+      "Arial Unicode MS",
+  ]
+  plt.rcParams["axes.unicode_minus"] = False
+  ```
+
+这样无论是在宿主机还是容器中生成的折线图和热力图，都能够正确显示中文标题和图例，不会出现方块字符。
+
 ## 项目结构
 
 ```

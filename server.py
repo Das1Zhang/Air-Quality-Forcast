@@ -1,6 +1,6 @@
 from pathlib import Path
 import subprocess
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS  # 允许前端跨域访问
 
 app = Flask(__name__)
@@ -9,6 +9,30 @@ CORS(app)  # 默认允许所有源，简单起步用
 ROOT_DIR = Path(__file__).resolve().parent
 DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
+
+@app.get("/")
+def index_page():
+    """返回前端主页面 webui/index.html"""
+    webui_dir = ROOT_DIR / "webui"
+    return send_from_directory(webui_dir, "index.html")
+
+@app.get("/styles.css")
+def styles_css():
+    """提供前端样式表 webui/styles.css"""
+    webui_dir = ROOT_DIR / "webui"
+    return send_from_directory(webui_dir, "styles.css")
+
+@app.get("/app.js")
+def app_js():
+    """提供前端脚本 webui/app.js"""
+    webui_dir = ROOT_DIR / "webui"
+    return send_from_directory(webui_dir, "app.js")
+
+@app.get("/output/<path:subpath>")
+def output_files(subpath: str):
+    """提供 output 目录下的静态文件，如图表和地图 HTML。"""
+    output_dir = ROOT_DIR / "output"
+    return send_from_directory(output_dir, subpath)
 
 @app.post("/api/upload")
 def api_upload():

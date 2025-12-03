@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000";
+const API_BASE = ""; // 使用相对路径，跟随当前页面所在的域名和端口
 
 const cities = [
     "武汉市",
