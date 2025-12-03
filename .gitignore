@@ -44,7 +44,6 @@ AirPrediction.pkl
 *.model
 
 # 可视化输出
-*.html
 map_*.html
 
 # IDE

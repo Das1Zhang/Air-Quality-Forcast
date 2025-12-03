@@ -52,7 +52,7 @@ h4 {
 .eyebrow {
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     color: var(--color-secondary);
 }
 
@@ -299,4 +299,52 @@ small {
     .layout {
         grid-template-columns: 1fr;
     }
+}
+
+.workflow-panel {
+    margin-top: 1.5rem;
+}
+
+.diagram-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 999;
+}
+
+.diagram-overlay.is-visible {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.diagram-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.diagram-overlay__content {
+    position: relative;
+    max-width: 80vw;
+    max-height: 80vh;
+    background: #0f172a;
+    border-radius: 1rem;
+    padding: 1rem 1.5rem 1.5rem;
+    box-shadow: 0 25px 50px rgba(15, 23, 42, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: auto;
+}
+
+.diagram-overlay__content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 0.75rem;
+}
+
+.diagram-overlay__close {
+    align-self: flex-end;
 }

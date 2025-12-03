@@ -198,5 +198,50 @@ document
         });
     });
 
+const btnWorkflow = document.getElementById("btnWorkflow");
+const btnLSTM = document.getElementById("btnLSTM");
+const overlay = document.getElementById("diagramOverlay");
+const overlayImg = document.getElementById("diagramImage");
+const overlayClose = document.getElementById("diagramClose");
+const overlayBackdrop = document.getElementById("diagramOverlayBackdrop");
+
+function showDiagram(url, alt) {
+    if (!overlay || !overlayImg) return;
+    overlayImg.src = url;
+    overlayImg.alt = alt;
+    overlay.classList.add("is-visible");
+}
+
+function hideDiagram() {
+    if (!overlay) return;
+    overlay.classList.remove("is-visible");
+}
+
+if (btnWorkflow) {
+    btnWorkflow.addEventListener("click", () => {
+        showDiagram(
+            "https://132-1331126615.cos.ap-guangzhou.myqcloud.com/workflow.png",
+            "项目工作流程图"
+        );
+    });
+}
+
+if (btnLSTM) {
+    btnLSTM.addEventListener("click", () => {
+        showDiagram(
+            "https://132-1331126615.cos.ap-guangzhou.myqcloud.com/LSTM.png",
+            "LSTM 模型原理图"
+        );
+    });
+}
+
+if (overlayClose) {
+    overlayClose.addEventListener("click", hideDiagram);
+}
+
+if (overlayBackdrop) {
+    overlayBackdrop.addEventListener("click", hideDiagram);
+}
+
 initCitySelect();
 updateStagingView();

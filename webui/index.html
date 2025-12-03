@@ -72,6 +72,15 @@
             <div class="console" id="console" aria-live="polite">
                 <p>等待操作...</p>
             </div>
+
+            <div class="workflow-panel">
+                <h3>项目原理与流程图</h3>
+                <p class="panel__subtitle">在当前页面预览工作流程图与 LSTM 模型结构。</p>
+                <div class="action-group">
+                    <button id="btnWorkflow" class="button secondary">查看项目工作流程图</button>
+                    <button id="btnLSTM" class="button secondary">查看 LSTM 原理图</button>
+                </div>
+            </div>
         </section>
 
         <section class="panel stage-panel">
@@ -186,10 +195,19 @@
     </main>
 
     <footer class="footer">
-        <p>© 2025 湖北省空气质量预测实验 · Monet's Garden 主题界面</p>
+        <p> 2025 湖北省空气质量预测实验 · Monet's Garden 主题界面</p>
     </footer>
 
+    <div id="diagramOverlay" class="diagram-overlay">
+        <div class="diagram-overlay__backdrop" id="diagramOverlayBackdrop"></div>
+        <div class="diagram-overlay__content">
+            <button id="diagramClose" class="button ghost diagram-overlay__close">关闭</button>
+            <img id="diagramImage" alt="项目示意图" />
+        </div>
+    </div>
+
     <script src="app.js"></script>
+
 </body>
 
 </html>
