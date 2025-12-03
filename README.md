@@ -267,9 +267,29 @@ python src/6_visualize.py
 
 > ⚠️ 注意：由于基础镜像为完整的 PyTorch 镜像（含 CUDA 组件），最终镜像体积较大（约 10GB 量级），首次拉取与启动会相对耗时。建议在磁盘空间和网络条件允许的环境下使用。
 
-#### 1. 构建 Docker 镜像
+#### 1. 从 Docker Hub 直接拉取（推荐给普通使用者）
 
-在项目根目录执行：
+对于只想快速体验项目而不修改代码的用户，可以直接从 Docker Hub 拉取已经构建好的镜像：
+
+```bash
+docker pull das1jason/air-quality-forecast:latest
+```
+
+拉取完成后，使用以下命令启动容器：
+
+```bash
+docker run --rm -p 5000:5000 das1jason/air-quality-forecast:latest
+```
+
+启动成功后，可以在浏览器访问：
+
+```text
+http://localhost:5000
+```
+
+#### 2. 在本地手动构建镜像（适合开发者调试）
+
+如果你修改了项目代码，或希望自行构建镜像，可在项目根目录执行：
 
 ```bash
 docker build -t das1zhang/air-quality-forecast:latest .
@@ -277,9 +297,7 @@ docker build -t das1zhang/air-quality-forecast:latest .
 
 首构建会拉取 `pytorch/pytorch:latest` 基础镜像，耗时较长；后续修改代码后重建镜像会复用大部分缓存层，速度会明显加快。
 
-#### 2. 基本运行方式
-
-使用以下命令启动容器，并将容器内的 5000 端口映射到宿主机的 5000 端口：
+然后使用以下命令启动本地构建的镜像：
 
 ```bash
 docker run --rm -p 5000:5000 das1zhang/air-quality-forecast:latest
