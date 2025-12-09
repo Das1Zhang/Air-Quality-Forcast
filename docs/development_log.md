@@ -115,3 +115,20 @@
   - 通过 README 中新增的 Docker 使用说明，整理了镜像构建、端口映射以及挂载 `data/` 目录的推荐命令，支持用户在容器中通过 Web UI 上传 Excel 并将数据持久化到宿主机。
   - 在说明文档中明确标注了 Docker 镜像体积较大（约 10GB）以及首构建/首次拉取的时间成本，便于使用者提前规划磁盘与网络资源。
 
+## 2025-12-09
+
+### Web 工作台细节优化与部署方案完善
+- 阶段 2 EDA 多输出支持：
+  - 在 `server.py` 的 `/api/status` 中，将阶段 2 的输出从单一图片路径扩展为包含三个条目的列表：
+    - 城市 AQI 均值表：`output/eda/city_aqi_mean.csv`。
+    - 各城市最近 90 天 AQI 趋势图：`output/eda/aqi_trend_90days.png`。
+    - 污染物与 AQI 相关性热力图：`output/eda/aqi_correlation_heatmap.png`（基于所有城市合并后的整体相关性）。
+  - 更新前端 `webui/app.js`，在刷新阶段状态时支持渲染多条输出链接：
+    - 当某阶段 `output` 为数组时，将每个条目渲染为单独的 `<a>` 链接（以 `|` 分隔）。
+    - 保持对旧的字符串形式 `output` 的兼容，其他阶段仍以单链接形式展示。
+- Docker 镜像与部署流程完善：
+  - 在本地修复 Docker 代理配置，重新构建并推送最新镜像 `das1jason/air-quality-forecast:latest` 至 Docker Hub，包含上述 Web/API 变更。
+  - 在 VPS 上通过 `docker pull` 拉取新镜像，并使用挂载卷 `~/air-quality-data:/app/data` 启动容器，确保训练所用城市数据完全由当前 Web 上传决定，不受旧数据残留影响。
+  - 使用 Cloudflare Tunnel 将 VPS 上的 `http://localhost:5000` 暴露为自定义域名（如 `aqi.<domain>`），实现公网安全访问：
+    - Tunnel 端通过 `ingress` 配置 `hostname -> http://localhost:5000`，无需修改应用代码。
+    - 更新 README 与个人部署笔记，整理从 Docker Hub 拉取镜像、在 VPS 上运行容器以及结合 Cloudflare Tunnel 绑定域名的一体化流程.

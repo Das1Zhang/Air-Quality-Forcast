@@ -139,7 +139,7 @@ python src/2_eda.py
 输出：
 - 城市 AQI 均值表：`output/eda/city_aqi_mean.csv`
 - 最近 90 天 AQI 趋势图：`output/eda/aqi_trend_90days.png`
-- 污染物与 AQI 相关性热力图：`output/eda/aqi_correlation_heatmap.png`
+- 污染物与 AQI 相关性热力图（基于所有城市合并后的整体相关性）：`output/eda/aqi_correlation_heatmap.png`
 
 ### 步骤 3：特征工程与预处理
 
@@ -249,7 +249,9 @@ python src/6_visualize.py
    - 点击「上传到暂存区」，后端会将文件保存为 `data/历史日数据_{城市}.xlsx`，与阶段 1 逻辑兼容。
    - 为需要参与训练的各城市依次重复上一步。
    - 点击「训练并预测」，前端会调用 `/api/run_pipeline`，后端串行执行 `src/1_data_process.py` 至 `src/6_visualize.py`。
-   - 通过「刷新状态」按钮调用 `/api/status`，可查看每个阶段的状态以及可视化输出链接（如 `aqi_trend_90days.png`、`test_vs_pred.png`、`map_hubei.html` 等）。
+   - 通过「刷新状态」按钮调用 `/api/status`，可查看每个阶段的状态以及可视化输出链接：
+     - 阶段 2 现在会展示多个链接，包括城市 AQI 均值表 CSV、90 天趋势图以及污染物与 AQI 相关性热力图。
+     - 其他阶段则展示各自的关键输出文件（如 `test_vs_pred.png`、`map_hubei.html` 等）。
 
 说明：
 
