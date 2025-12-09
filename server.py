@@ -10,6 +10,18 @@ ROOT_DIR = Path(__file__).resolve().parent
 DATA_DIR = ROOT_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+@app.get("/reproduce")
+def reproduce_page():
+    """复现指南页面：返回 webui/reproduce.html"""
+    webui_dir = ROOT_DIR / "webui"
+    return send_from_directory(webui_dir, "reproduce.html")
+
+@app.get("/docs/<path:subpath>")
+def docs_files(subpath: str):
+    """提供 docs 目录下的静态文档文件（如 Markdown 复现指南）。"""
+    docs_dir = ROOT_DIR / "docs"
+    return send_from_directory(docs_dir, subpath)
+
 @app.get("/")
 def index_page():
     """返回前端主页面 webui/index.html"""
@@ -82,10 +94,31 @@ def api_status():
     def exists(rel_path: str) -> bool:
         return (ROOT_DIR / rel_path).exists()
 
+    # 阶段二：汇总多个输出文件（如果存在）
+    stage2_outputs = []
+    if exists("output/eda/aqi_trend_90days.png"):
+        stage2_outputs.append({
+            "label": "AQI 趋势图",
+            "path": "output/eda/aqi_trend_90days.png",
+        })
+    if exists("output/eda/aqi_correlation_heatmap.png"):
+        stage2_outputs.append({
+            "label": "相关性热力图",
+            "path": "output/eda/aqi_correlation_heatmap.png",
+        })
+    if exists("output/eda/city_aqi_mean.csv"):
+        stage2_outputs.append({
+            "label": "城市 AQI 均值表 (CSV)",
+            "path": "output/eda/city_aqi_mean.csv",
+        })
+
     return jsonify({
         "stage1": {"status": "success", "text": "完成", "output": None},
-        "stage2": {"status": "success", "text": "完成",
-                   "output": "output/eda/aqi_trend_90days.png" if exists("output/eda/aqi_trend_90days.png") else None},
+        "stage2": {
+            "status": "success",
+            "text": "完成",
+            "output": stage2_outputs or None,
+        },
         "stage3": {"status": "success", "text": "完成", "output": None},
         "stage4": {"status": "success", "text": "完成", "output": None},
         "stage5": {"status": "success", "text": "完成",
