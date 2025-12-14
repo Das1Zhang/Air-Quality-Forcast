@@ -4,6 +4,100 @@
 
 ---
 
+## 直接克隆项目进行复现
+
+### pip 镜像源（本地 Python 复现时用）
+全局配置pip镜像源
+```bash
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+### 直接使用本地 Python 环境复现（非 Docker）
+
+如果不想使用 Docker，也可以按如下方式直接复现：
+
+1. 安装 Conda 或 Python 3.10+。
+2. 克隆项目代码：
+   ```bash
+   git clone https://github.com/Das1Zhang/Air-Quality-Forcast.git
+   cd Air-Quality-Forcast
+   ```
+
+3. 安装系统级编译环境以及依赖
+  ```bash
+  sudo apt install -y build-essential libssl-dev libffi-dev python3-dev \
+    gfortran libopenblas-dev liblapack-dev pkg-config \
+    libfreetype6-dev libpng-dev
+  ```
+  ```bash
+  pip install -r requirements.txt
+  ```
+4. 直接启动 Web 工作台：
+
+   ```bash
+   python server.py
+   ```
+
+5. 浏览器访问：
+
+   ```text
+   http://localhost:5000
+   ```
+
+   后续操作（上传数据、训练与预测、查看阶段输出）与 Docker 方式完全一致。
+
+
+### Docker 镜像加速器（云主机容易失败）
+
+[安装docker CE](https://mirrors.tuna.tsinghua.edu.cn/help/docker-ce/)
+```bash
+export DOWNLOAD_URL="https://mirrors.tuna.tsinghua.edu.cn/docker-ce"
+
+curl -fsSL https://raw.githubusercontent.com/docker/docker-install/master/install.sh | sudo -E sh
+```
+
+在 Linux（Ubuntu/Debian）上：编辑或创建 `/etc/docker/daemon.json`：
+```bash
+sudo vim  /etc/docker/daemon.json
+```
+添加镜像源链接
+```json
+{
+    "registry-mirrors": [
+        "https://registry.docker-cn.com",
+        "https://docker.mirrors.ustc.edu.cn",
+        "https://hub-mirror.c.163.com",
+        "https://mirror.baidubce.com",
+        "https://ccr.ccs.tencentyun.com"
+    ]
+}
+```
+
+然后重启 Docker：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+查看是否配置成功
+```bash
+sudo docker info
+```
+
+如果出现以下内容
+
+```
+ Registry Mirrors:
+  https://docker.mirrors.ustc.edu.cn/
+  http://hub-mirror.c.163.com/
+  https://mirror.ccs.tencentyun.com/
+  https://registry.docker-cn.com/
+```
+则配置完成
+- 配置完成后，再执行本指南中的 `docker pull ...` 通常会明显变快。
+
+
+
 ## 一、使用 Docker 快速体验（推荐）
 
 适合：不想配置 Python 环境，只需快速跑一遍完整流程的用户。
@@ -20,6 +114,8 @@ docker version
 ```
 
 能正常显示版本信息即可。
+
+
 
 ### 2. 拉取镜像
 
@@ -177,41 +273,4 @@ docker run -d --name air-quality \
 
 ---
 
-## 三、直接使用本地 Python 环境复现（非 Docker）
 
-如果不想使用 Docker，也可以按如下方式直接复现：
-
-1. 安装 Conda 或 Python 3.10+。
-2. 克隆项目代码：
-
-   ```bash
-   git clone https://github.com/Das1Zhang/Air-Quality-Forcast.git
-   cd Air-Quality-Forcast
-   ```
-
-3. 使用 Conda 创建环境并安装依赖：
-
-   ```bash
-   conda env create -f environment.yml
-   conda activate air-quality-forecast
-   ```
-
-   或者使用 pip：
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. 直接启动 Web 工作台：
-
-   ```bash
-   python server.py
-   ```
-
-5. 浏览器访问：
-
-   ```text
-   http://localhost:5000
-   ```
-
-   后续操作（上传数据、训练与预测、查看阶段输出）与 Docker 方式完全一致。
