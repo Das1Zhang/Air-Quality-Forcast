@@ -179,23 +179,48 @@ document
     .getElementById("refreshStages")
     .addEventListener("click", async () => {
         appendConsole("刷新阶段状态...");
-        const res = await fetch(`${API_BASE}/api/status`);
-        const status = await res.json();
-        stageList.forEach(({ id }) => {
-            const state = status[id] || { status: "idle", text: "待开始" };
-            setStageStatus(id, state.status, state.text);
-            const output = document.getElementById(`${id}-output`);
-            if (output) {
-                if (state.output) {
-                    // 保证链接从站点根目录开始，而不是当前 /webui/ 路径
-                    const url =
-                        state.output.startsWith("/") ? state.output : `/${state.output}`;
-                    output.innerHTML = `<a href="${url}" target="_blank">查看输出</a>`;
-                } else {
-                    output.innerHTML = '<p class="placeholder">暂无输出</p>';
+        try {
+            const res = await fetch(`${API_BASE}/api/status`);
+            const status = await res.json();
+
+            stageList.forEach(({ id }) => {
+                try {
+                    const state = status[id] || { status: "idle", text: "待开始" };
+                    setStageStatus(id, state.status, state.text);
+                    const output = document.getElementById(`${id}-output`);
+                    if (!output) return;
+
+                    const out = state.output;
+                    if (Array.isArray(out) && out.length > 0) {
+                        // 多个输出：渲染为多个链接
+                        const links = out
+                            .map((item) => {
+                                if (!item || !item.path) return "";
+                                const rawPath = item.path;
+                                const url = rawPath.startsWith("/")
+                                    ? rawPath
+                                    : `/${rawPath}`;
+                                const label = item.label || "查看输出";
+                                return `<a href="${url}" target="_blank">${label}</a>`;
+                            })
+                            .filter(Boolean)
+                            .join(" | ");
+                        output.innerHTML = links || '<p class="placeholder">暂无输出</p>';
+                    } else if (typeof out === "string" && out) {
+                        // 单个输出：兼容之前的字符串形式
+                        const url = out.startsWith("/") ? out : `/${out}`;
+                        output.innerHTML = `<a href="${url}" target="_blank">查看输出</a>`;
+                    } else {
+                        output.innerHTML = '<p class="placeholder">暂无输出</p>';
+                    }
+                } catch (err) {
+                    console.error(`渲染 ${id} 输出失败`, err);
                 }
-            }
-        });
+            });
+        } catch (err) {
+            console.error("刷新阶段状态失败", err);
+            appendConsole(`刷新状态失败：${err}`);
+        }
     });
 
 const btnWorkflow = document.getElementById("btnWorkflow");
