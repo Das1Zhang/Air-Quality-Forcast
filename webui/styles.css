@@ -10,8 +10,8 @@
     --color-warning: #eab308;
     --color-error: #ef4444;
     --color-info: #a21caf;
-    --font-heading: "Merriweather", serif;
-    --font-body: "DM Sans", sans-serif;
+    --font-heading: "Merriweather", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", serif;
+    --font-body: "DM Sans", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
     --radius: 0.75rem;
     --border-width: 1px;
     --shadow: 0 15px 35px rgba(20, 83, 45, 0.08);
@@ -221,7 +221,7 @@ small {
     border-radius: var(--radius);
     padding: 1rem;
     min-height: 90px;
-    font-family: "DM Sans", monospace;
+    font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", monospace;
 }
 
 .stage-panel__header {

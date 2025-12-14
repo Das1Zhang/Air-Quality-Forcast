@@ -5,11 +5,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>复现指南 · 湖北省空气质量预测系统</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
+    <!-- Google Fonts 在国内可能无法访问，已注释掉 -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com" /> -->
+    <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /> -->
+    <!-- <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Merriweather:wght@400;600&display=swap"
-        rel="stylesheet" />
+        rel="stylesheet" /> -->
     <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -44,8 +45,8 @@
         <p>2025 湖北省空气质量预测实验 · 复现指南</p>
     </footer>
 
-    <!-- 使用 CDN 版本的 marked.js 进行 Markdown 渲染 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 使用国内 CDN 版本的 marked.js 进行 Markdown 渲染 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <script>
         async function loadReproduceGuide() {
             const root = document.getElementById("md-root");
