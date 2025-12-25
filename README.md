@@ -406,3 +406,6 @@ Air-Quality-Forcast/
 ## 许可证
 
 本项目用于 WHU Python 课程 25fall。
+
+# 撰写人
+张思浩

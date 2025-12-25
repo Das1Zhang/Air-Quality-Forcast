@@ -4,6 +4,7 @@
 - 时间/季节特征 & AQI 滞后特征
 - SelectKBest 选择前 10 个特征
 - 保存特征数据与 scaler 供后续建模使用
+该程序代码完成人：张思浩，杨佳澄
 """
 
 from __future__ import annotations

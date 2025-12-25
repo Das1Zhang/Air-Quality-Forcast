@@ -1,6 +1,7 @@
 """
 步骤 1：数据整合
 读取 data/ 目录下所有城市的 Excel 文件，合并为一个总的 CSV 文件 AirCondition.csv
+该程序代码完成人：张思浩，李欣桐
 """
 
 import pandas as pd

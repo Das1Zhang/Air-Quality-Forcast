@@ -3,6 +3,8 @@
 - 读取 `output/predictions/AirPrediction.pkl`
 - 生成 17 个城市的历史 AQI + 预测值折线子图保存为 `output/visualization/AirPrediction.png`
 - 生成湖北省预测 AQI 热力图（带自动降级方案）输出 `output/visualization/map_hubei.html`
+
+该程序代码完成人：张思浩，杨雅涵
 """
 
 from __future__ import annotations

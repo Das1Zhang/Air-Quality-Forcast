@@ -5,6 +5,8 @@
 2. 计算测试集 MSE / R²，并绘制真实值 vs 预测值折线图。
 3. 使用训练好的 LSTM 模型对每个城市最新 30 天数据进行下一日 AQI 预测，反归一化至真实尺度。
 4. 汇总城市名称、预测值、历史真实 AQI，保存为 `output/predictions/AirPrediction.pkl`，供后续可视化使用。
+
+该程序代码完成人：张思浩，汪凌昊
 """
 
 from __future__ import annotations

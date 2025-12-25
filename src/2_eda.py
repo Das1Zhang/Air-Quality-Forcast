@@ -1,6 +1,7 @@
 """
 步骤 2：探索性数据分析（EDA）
 读取合并后的 AirCondition.csv，输出城市 AQI 均值、90 天趋势和相关性热力图
+该程序代码完成人：张思浩，李欣桐
 """
 
 from pathlib import Path

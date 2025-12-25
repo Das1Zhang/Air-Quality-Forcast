@@ -1,6 +1,8 @@
 """
 安装 PyEcharts 地图包的辅助脚本
 解决 echarts-china-provinces-pypkg 安装问题
+
+该程序代码完成人：张思浩
 """
 
 import subprocess
